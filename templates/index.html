@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.fraud {
+            background: #fee;
+            border: 2px solid #f44336;
+        }
+
+        .result.legitimate {
+            background: #efe;
+            border: 2px solid #4caf50;
+        }
+
+        .result-icon {
+            text-align: center;
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .result-title {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .result.fraud .result-title {
+            color: #f44336;
+        }
+
+        .result.legitimate .result-title {
+            color: #4caf50;
+        }
+
+        .result-message {
+            text-align: center;
+            color: #666;
+            font-size: 1em;
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #f44336;
+            color: #f44336;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-text {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .health-status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .health-status.offline {
+            background: #ffebee;
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Fraud Detection</h1>
+        <p class="subtitle">AI-Powered Transaction Security</p>
+        
+        <div id="healthStatus" class="health-status">
+            Checking system status...
+        </div>
+
+        <form id="fraudForm">
+            <div class="form-group">
+                <label for="transactionAmount">Transaction Amount ($)</label>
+                <input type="number" id="transactionAmount" name="transactionAmount" 
+                       step="0.01" min="0" required placeholder="Enter amount">
+                <div class="info-text">Enter the transaction amount in dollars</div>
+            </div>
+
+            <div class="form-group">
+                <label for="customerAge">Customer Age</label>
+                <input type="number" id="customerAge" name="customerAge" 
+                       min="18" max="120" required placeholder="Enter age">
+                <div class="info-text">Customer's age (18-120)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="accountBalance">Account Balance ($)</label>
+                <input type="number" id="accountBalance" name="accountBalance" 
+                       step="0.01" required placeholder="Enter balance">
+                <div class="info-text">Current account balance</div>
+            </div>
+
+            <div class="form-group">
+                <label for="channel">Transaction Channel</label>
+                <select id="channel" name="channel" required>
+                    <option value="">Select a channel</option>
+                    <option value="Online">Online</option>
+                    <option value="Branch">Branch</option>
+                    <option value="ATM">ATM</option>
+                </select>
+                <div class="info-text">How the transaction was initiated</div>
+            </div>
+
+            <div class="form-group">
+                <label for="loginAttempts">Login Attempts</label>
+                <input type="number" id="loginAttempts" name="loginAttempts" 
+                       min="0" required placeholder="Enter login attempts">
+                <div class="info-text">Number of login attempts before transaction</div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                Analyze Transaction
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Analyzing transaction...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-message" id="resultMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000';
+
+        // Check API health on page load
+        async function checkHealth() {
+            const healthStatus = document.getElementById('healthStatus');
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                if (response.ok) {
+                    healthStatus.textContent = '✓ System Online';
+                    healthStatus.classList.remove('offline');
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                healthStatus.textContent = '✗ System Offline - Please start the API server';
+                healthStatus.classList.add('offline');
+            }
+        }
+
+        // Check health immediately and every 30 seconds
+        checkHealth();
+        setInterval(checkHealth, 30000);
+
+        // Handle form submission
+        document.getElementById('fraudForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form values
+            const formData = {
+                TransactionAmount: parseFloat(document.getElementById('transactionAmount').value),
+                CustomerAge: parseInt(document.getElementById('customerAge').value),
+                AccountBalance: parseFloat(document.getElementById('accountBalance').value),
+                Channel: document.getElementById('channel').value,
+                LoginAttempts: parseInt(document.getElementById('loginAttempts').value)
+            };
+
+            // Show loading, hide previous results
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Display result
+                    const resultDiv = document.getElementById('result');
+                    const resultIcon = document.getElementById('resultIcon');
+                    const resultTitle = document.getElementById('resultTitle');
+                    const resultMessage = document.getElementById('resultMessage');
+
+                    if (data.is_fraud) {
+                        resultDiv.className = 'result fraud';
+                        resultIcon.textContent = '⚠️';
+                        resultTitle.textContent = 'Fraud Detected!';
+                        resultMessage.textContent = data.message;
+                    } else {
+                        resultDiv.className = 'result legitimate';
+                        resultIcon.textContent = '✅';
+                        resultTitle.textContent = 'Transaction Safe';
+                        resultMessage.textContent = data.message;
+                    }
+
+                    resultDiv.style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Prediction failed');
+                }
+            } catch (error) {
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = `Error: ${error.message}`;
+                errorDiv.style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        // Add sample data button functionality
+        function fillSampleData(isFraud) {
+            if (isFraud) {
+                // Suspicious transaction
+                document.getElementById('transactionAmount').value = '15000';
+                document.getElementById('customerAge').value = '25';
+                document.getElementById('accountBalance').value = '5000';
+                document.getElementById('channel').value = 'Online';
+                document.getElementById('loginAttempts').value = '8';
+            } else {
+                // Legitimate transaction
+                document.getElementById('transactionAmount').value = '150';
+                document.getElementById('customerAge').value = '45';
+                document.getElementById('accountBalance').value = '25000';
+                document.getElementById('channel').value = 'Branch';
+                document.getElementById('loginAttempts').value = '1';
+            }
+        }
+    </script>
+</body>
+</html>
