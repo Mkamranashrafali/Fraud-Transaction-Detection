@@ -20,10 +20,18 @@
     - [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda-1)
     - [Model Development](#model-development-1)
     - [Model Evaluation](#model-evaluation-1)
+  - [Performance](#performance)
+  - [Installation \& Setup](#installation--setup)
+    - [Prerequisites](#prerequisites)
+    - [Step 1: Install Dependencies](#step-1-install-dependencies)
+    - [Step 2: Prepare Model Files](#step-2-prepare-model-files)
+  - [Usage](#usage)
+    - [Option 1: Run Flask API + Web Interface (Recommended)](#option-1-run-flask-api--web-interface-recommended)
+    - [Option 2: Use REST API Directly](#option-2-use-rest-api-directly)
+  - [API Endpoints](#api-endpoints)
+    - [Predict Endpoint Details](#predict-endpoint-details)
   - [Web Application Interface](#web-application-interface)
-  - [Results](#results)
-  - [How to Run](#how-to-run)
-  - [Conclusion \& Future Work](#conclusion--future-work)
+  - [Future Improvements](#future-improvements)
 
 ## Overview
 
@@ -151,9 +159,9 @@ The trained model's performance is assessed on the unseen test data using standa
 
 ```
               precision    recall  f1-score   support
-           0       0.83      0.94      0.88       376
-           1       0.70      0.43      0.53       127
-    accuracy                           0.81       503
+           0       0.88      0.95      0.91       376
+           1       0.81      0.61      0.70       127
+    accuracy                           0.87       503
 ```
 
 **Key Metrics:**
