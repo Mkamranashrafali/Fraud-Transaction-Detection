@@ -1,41 +1,21 @@
 # Fraud Detection in Financial Transactions
 
 ## Table of Contents
-- [Fraud Detection in Financial Transactions](#fraud-detection-in-financial-transactions)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Project Structure](#project-structure)
-  - [Dataset](#dataset)
-  - [Model \& Methodology](#model--methodology)
-    - [Data Understanding \& Loading](#data-understanding--loading)
-    - [Data Preprocessing](#data-preprocessing)
-    - [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda)
-    - [Model Development](#model-development)
-    - [Model Evaluation](#model-evaluation)
-  - [Architecture](#architecture)
-  - [Data](#data)
-  - [Methodology](#methodology)
-    - [Data Understanding \& Loading](#data-understanding--loading-1)
-    - [Data Preprocessing](#data-preprocessing-1)
-    - [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda-1)
-    - [Model Development](#model-development-1)
-    - [Model Evaluation](#model-evaluation-1)
-  - [Performance](#performance)
-  - [Installation \& Setup](#installation--setup)
-    - [Prerequisites](#prerequisites)
-    - [Step 1: Install Dependencies](#step-1-install-dependencies)
-    - [Step 2: Prepare Model Files](#step-2-prepare-model-files)
-  - [Usage](#usage)
-    - [Option 1: Run Flask API + Web Interface (Recommended)](#option-1-run-flask-api--web-interface-recommended)
-    - [Option 2: Use REST API Directly](#option-2-use-rest-api-directly)
-  - [API Endpoints](#api-endpoints)
-    - [Predict Endpoint Details](#predict-endpoint-details)
-  - [Web Application Interface](#web-application-interface)
-  - [Future Improvements](#future-improvements)
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Dataset](#dataset)
+- [Model & Methodology](#model--methodology)
+- [Architecture](#architecture)
+- [Performance](#performance)
+- [Installation & Setup](#installation--setup)
+- [Usage](#usage)
+- [API Endpoints](#api-endpoints)
+- [Web Application Interface](#web-application-interface)
+- [Future Improvements](#future-improvements)
 
 ## Overview
 
-This project implements an end-to-end fraud detection system for financial transactions. Using a **Support Vector Machine (SVlsM)** algorithm, the system classifies transactions as legitimate or fraudulent with ~81% accuracy. The solution includes a trained ML model, a Flask REST API backend, and an interactive HTML web interface for real-time predictions.
+This project implements an end-to-end fraud detection system for financial transactions. Using a **Random Forest Classifier** algorithm, the system classifies transactions as legitimate or fraudulent with ~87% accuracy. The solution includes a trained ML model, a Flask REST API backend, and an interactive HTML web interface for real-time predictions.
 
 ## Project Structure
 
@@ -43,8 +23,8 @@ This project implements an end-to-end fraud detection system for financial trans
 fraud-detection/
 ├── model_training.ipynb        # Jupyter notebook with complete model development
 ├── api.py                       # Flask API server with prediction endpoints
-├── data.csv                     # Training dataset
-├── svm_model.pkl                # Trained SVM model (binary)
+├── data.csv                     # Training dataset (2,512 transactions)
+├── svm_model.pkl                # Trained Random Forest model (binary)
 ├── scaler.pkl                   # StandardScaler for feature normalization
 ├── requirements.txt             # Python dependencies
 ├── templates/
@@ -75,7 +55,7 @@ The `Data` class loads the CSV dataset into a Pandas DataFrame and performs init
 
 The `DataPreprocessing` class:
 - **Feature Selection:** Selects relevant features for model training
-- **Label Encoding:** Converts categorical `Channel` values to numerical: `{'Online': 0, 'Branch': 1, 'ATM': 2}`
+- **Label Encoding:** Converts categorical `Channel` values to numerical: `{'ATM': 0, 'Online': 1, 'Branch': 2}`
 
 ### Exploratory Data Analysis (EDA)
 
@@ -88,7 +68,12 @@ Multiple EDA classes generate visualizations:
 The `Model` class executes the ML pipeline:
 - **Data Splitting:** 80% training / 20% testing with stratified sampling
 - **Feature Scaling:** `StandardScaler` standardizes all features (mean=0, std=1)
-- **Algorithm:** Support Vector Classifier (SVC) with linear kernel
+- **Algorithm:** Random Forest Classifier with optimized hyperparameters
+  - `n_estimators=300` - 300 decision trees
+  - `max_depth=10` - Tree depth limit
+  - `min_samples_leaf=2` - Minimum samples per leaf
+  - `class_weight='balanced_subsample'` - Handles class imbalance
+- **Threshold Tuning:** Probability threshold set to 0.62 for fraud predictions
 - **Model Persistence:** `PickleData` class serializes trained model and scaler
 
 ### Model Evaluation
@@ -104,7 +89,7 @@ The project consists of two main components:
 
 **1. Model Training Pipeline (`model_training.ipynb`)**
    - `Data`, `DataPreprocessing`, `Graph`, `UnivariateAnalysis`, `BivariateAnalysis` classes
-   - `Model` class manages the SVM training pipeline
+   - `Model` class manages the Random Forest training pipeline
    - `PickleData` class serializes model and scaler
 
 **2. Flask API & Web Interface (`api.py` + `index.html`)**
@@ -113,70 +98,54 @@ The project consists of two main components:
    - HTML form interface for user input
    - Real-time prediction with risk classification
 
-## Data
-
-The model is trained on a financial transaction dataset (`data.csv`) using the following key features:
-
-*   **Numerical Features:** `TransactionAmount`, `CustomerAge`, `AccountBalance`, `LoginAttempts`.
-*   **Categorical Feature:** `Channel` (encoded into `ChannelEncoded`).
-*   **Target Variable:** `is_fraud` (a binary variable where `1` indicates a fraudulent transaction and `0` indicates a legitimate one).
-
-## Methodology
-
-### Data Understanding & Loading
-
-The process begins by loading the `data.csv` dataset into a Pandas DataFrame. Initial exploration is performed to understand the data's structure, check for null values, and generate descriptive statistics.
-
-### Data Preprocessing
-
-The `DataPreprocessing` class executes the following key steps:
-*   **Feature Selection:** A subset of relevant features is chosen for model training.
-*   **Label Encoding:** The categorical `Channel` column is converted into numerical representations (`{'ATM': 0, 'Online': 1, 'Branch': 2}`), making it suitable for the SVM algorithm.
-
-### Exploratory Data Analysis (EDA)
-
-Visualizations are created to gain insights from the data:
-*   **Univariate Analysis:** Distributions of individual features like `TransactionAmount` and `CustomerAge` are plotted to understand their spread.
-*   **Bivariate Analysis:** The relationship between features and the target variable (`is_fraud`) is analyzed to identify patterns associated with fraudulent activities.
-
-### Model Development
-
-The core machine learning pipeline is executed by the `Model` class:
-*   **Data Splitting:** The dataset is split into training (80%) and testing (20%) sets. Stratified sampling is used to maintain the class distribution in both sets.
-*   **Feature Scaling:** `StandardScaler` is applied to the training and testing data. This standardizes features to have a mean of 0 and a standard deviation of 1, which is crucial for SVM performance.
-*   **Model Training:** A **Support Vector Classifier (SVC)** with a linear kernel is trained on the scaled training data.
-
-### Model Evaluation
-
-The trained model's performance is assessed on the unseen test data using standard metrics:
-*   **Confusion Matrix:** To see the counts of correct and incorrect predictions.
-*   **Classification Report:** To review precision, recall, and F1-score for each class.
-*   **Accuracy Score:** To get the overall percentage of correct classifications.
-
 ## Performance
 
 **Model Performance Summary:**
 
+**Test Set Accuracy:** 86.68% (~87%)
+
+**Classification Report:**
 ```
               precision    recall  f1-score   support
            0       0.88      0.95      0.91       376
            1       0.81      0.61      0.70       127
     accuracy                           0.87       503
+   macro avg       0.85      0.78      0.81       503
+weighted avg       0.86      0.87      0.86       503
 ```
 
-**Key Metrics:**
-*   **Overall Accuracy:** ~**81%** - The model correctly classifies 81% of transactions
-*   **Fraud Detection (Class 1):**
-    *   **Precision:** 70% - When the model predicts fraud, it's correct 70% of the time
-    *   **Recall:** 43% - The model identifies 43% of actual fraudulent transactions
-*   **Legitimate Detection (Class 0):**
-    *   **Precision:** 83% - High accuracy for legitimate transactions
-    *   **Recall:** 94% - Catches most legitimate transactions
+**Confusion Matrix:**
+```
+             Predicted Legitimate  Predicted Fraud
+Actual Legitimate      358                18
+Actual Fraud           49                 78
+```
+
+**Performance by Class:**
+
+| Class | Metric | Value | Interpretation |
+|-------|--------|-------|-----------------|
+| **Legitimate (0)** | Precision | 88% | 88% of predicted legitimate transactions are actually legitimate |
+| **Legitimate (0)** | Recall | 95% | Model catches 95% of all legitimate transactions |
+| **Legitimate (0)** | F1-Score | 0.91 | Excellent overall performance on legitimate transactions |
+| **Fraudulent (1)** | Precision | 81% | 81% of predicted fraud cases are actually fraudulent (low false positives) |
+| **Fraudulent (1)** | Recall | 61% | Model identifies 61% of actual fraudulent transactions |
+| **Fraudulent (1)** | F1-Score | 0.70 | Moderate overall performance on fraud detection |
+
+**Model Strengths:**
+- ✅ Excellent legitimate detection: 95% recall minimizes false negatives
+- ✅ High fraud precision: 81% precision reduces false positives
+- ✅ Balanced overall accuracy: 87%
+- ✅ Handles class imbalance with balanced class weights
+
+**Considerations:**
+- ⚠️ Fraud recall at 61%: ~39% of fraudulent transactions may be missed
+- ⚠️ Trade-off optimized for low false positives; may allow some fraud
 
 ## Installation & Setup
 
 ### Prerequisites
-- Python 3.7+
+- Python 3.7 or higher
 - pip package manager
 
 ### Step 1: Install Dependencies
@@ -184,36 +153,36 @@ The trained model's performance is assessed on the unseen test data using standa
 pip install -r requirements.txt
 ```
 
-**Dependencies:**
-- `pandas` - Data manipulation
-- `scikit-learn` - ML algorithms and preprocessing
+**Required Packages:**
+- `pandas` - Data manipulation and analysis
+- `scikit-learn` - Machine learning algorithms and preprocessing
 - `matplotlib` - Data visualization
 - `flask` - Web API framework
 - `flask-cors` - Cross-Origin Resource Sharing support
-- `streamlit` (optional) - For alternative UI
 
 ### Step 2: Prepare Model Files
 Ensure the following files exist in the project directory:
-- `svm_model.pkl` - Trained SVM model
+- `svm_model.pkl` - Trained Random Forest model
 - `scaler.pkl` - Feature scaler for normalization
 
-If these files don't exist, run the model training notebook first to generate them.
+If these files don't exist, run the model training notebook first:
+```bash
+jupyter notebook model_training.ipynb
+```
 
 ## Usage
 
 ### Option 1: Run Flask API + Web Interface (Recommended)
 
-1. Start the Flask server:
+**Start the Flask server:**
 ```bash
 python api.py
 ```
 
-2. Open your browser and navigate to:
-```
-http://localhost:5000
-```
-
-3. Use the web form to input transaction details and get real-time predictions
+**Access the application:**
+- Open your browser and navigate to: `http://localhost:5000`
+- Use the web form to enter transaction details
+- Get real-time fraud risk prediction
 
 ### Option 2: Use REST API Directly
 
@@ -285,30 +254,29 @@ The interactive web interface (`index.html`) provides:
 
 ## Future Improvements
 
-Planned enhancements to boost model performance and functionality:
+### Model Enhancement
+- **Improve Fraud Recall:** Implement SMOTE (Synthetic Minority Over-sampling) to generate synthetic fraud examples
+- **Advanced Algorithms:** Test XGBoost, LightGBM, and Neural Networks for potentially higher performance
+- **Feature Engineering:** 
+  - Transaction frequency analysis
+  - Time-of-day patterns
+  - Historical transaction behavior
+  - Device fingerprinting
 
-*   **Improve Model Recall:** 
-    - Implement SMOTE (Synthetic Minority Over-sampling Technique)
-    - Use class weights to balance the imbalanced dataset
-    - Improve detection of fraudulent cases
+### Production Deployment
+- **Cloud Deployment:** Deploy to AWS, GCP, or Azure for public access
+- **Database Integration:** Store transaction history and predictions
+- **Authentication:** Add user accounts and API key authentication
+- **Model Versioning:** Implement version control for model updates
 
-*   **Advanced Models:**
-    - Experiment with XGBoost or LightGBM for higher performance
-    - Test ensemble methods combining multiple algorithms
-    - Implement neural networks with deep learning
+### Monitoring & Maintenance
+- **Performance Tracking:** Monitor model accuracy in production
+- **Anomaly Alerts:** Alert system for sudden performance degradation
+- **Retraining Pipeline:** Automated model retraining on new data
+- **A/B Testing:** Compare model versions for continuous improvement
 
-*   **Feature Engineering:**
-    - Develop transaction frequency features
-    - Add time-of-day analysis
-    - Incorporate historical transaction patterns
-
-*   **Production Deployment:**
-    - Deploy to cloud platforms (AWS, GCP, Azure)
-    - Add database integration for transaction logging
-    - Implement model versioning and A/B testing
-    - Add authentication and authorization
-
-*   **Monitoring:**
-    - Track model performance in production
-    - Alert system for anomalies
-    - Model retraining pipeline
+### Advanced Features
+- **Explainability:** Add SHAP values to explain individual predictions
+- **Batch Processing:** Support bulk fraud detection for large transaction volumes
+- **Real-time Updates:** Stream processing for instant fraud alerts
+- **Custom Thresholds:** Allow users to adjust fraud probability threshold
