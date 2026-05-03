@@ -4,14 +4,22 @@
 - [Fraud Detection in Financial Transactions](#fraud-detection-in-financial-transactions)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
-  - [Project Structure and Components](#project-structure-and-components)
-  - [Data](#data)
-  - [Methodology](#methodology)
+  - [Project Structure](#project-structure)
+  - [Dataset](#dataset)
+  - [Model \& Methodology](#model--methodology)
     - [Data Understanding \& Loading](#data-understanding--loading)
     - [Data Preprocessing](#data-preprocessing)
     - [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda)
     - [Model Development](#model-development)
     - [Model Evaluation](#model-evaluation)
+  - [Architecture](#architecture)
+  - [Data](#data)
+  - [Methodology](#methodology)
+    - [Data Understanding \& Loading](#data-understanding--loading-1)
+    - [Data Preprocessing](#data-preprocessing-1)
+    - [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda-1)
+    - [Model Development](#model-development-1)
+    - [Model Evaluation](#model-evaluation-1)
   - [Web Application Interface](#web-application-interface)
   - [Results](#results)
   - [How to Run](#how-to-run)
@@ -19,27 +27,83 @@
 
 ## Overview
 
-This project develops a machine learning model to detect fraudulent financial transactions. The primary goal is to accurately classify transactions as either legitimate or fraudulent, helping to mitigate financial losses.
+This project implements an end-to-end fraud detection system for financial transactions. Using a **Support Vector Machine (SVlsM)** algorithm, the system classifies transactions as legitimate or fraudulent with ~81% accuracy. The solution includes a trained ML model, a Flask REST API backend, and an interactive HTML web interface for real-time predictions.
 
-This solution employs a **Support Vector Machine (SVM)** algorithm, a powerful classifier well-suited for this task. The project covers the complete data science lifecycle, from initial data analysis and preprocessing to model training, evaluation, and finally, deployment as an interactive web application built with **Streamlit**. This allows for real-time fraud prediction based on user input.
+## Project Structure
 
-## Project Structure and Components
+```
+fraud-detection/
+├── model_training.ipynb        # Jupyter notebook with complete model development
+├── api.py                       # Flask API server with prediction endpoints
+├── data.csv                     # Training dataset
+├── svm_model.pkl                # Trained SVM model (binary)
+├── scaler.pkl                   # StandardScaler for feature normalization
+├── requirements.txt             # Python dependencies
+├── templates/
+│   └── index.html              # Web UI for predictions
+└── README.md                    # This file
+```
 
-The project consists of a Jupyter Notebook for model development (`svm_model_training.ipynb`) and a Python script for the web application (`app.py`).
+## Dataset
 
-*   **Model Training Notebook (`svm_model_training.ipynb`):**
-    *   **`Data` Class:** Handles loading the `data.csv` dataset and initial data exploration.
-    *   **`DataPreprocessing` Class:** Selects relevant features and performs label encoding on categorical data (e.g., converting 'Online', 'ATM' to numbers).
-    *   **EDA Classes (`Graph`, `UnivariateAnalysis`, `BivariateAnalysis`):** Used for creating visualizations to understand data distributions and relationships between features and fraud.
-    *   **`Model` Class:** Manages the core machine learning pipeline, including splitting data, applying `StandardScaler` for feature scaling, training a **Support Vector Classifier (SVC)**, and evaluating its performance.
-    *   **`PickleData` Class:** Saves the trained model (`svm_model.pkl`) and scaler (`scaler.pkl`) for use in the application.
+The model is trained on a financial transaction dataset (`data.csv`) with the following features:
 
-*   **Streamlit Web Application (`app.py`):**
-    *   Provides a user-friendly interface for real-time predictions.
-    *   Loads the saved `svm_model.pkl` and `scaler.pkl`.
-    *   Takes transaction details from the user via a form.
-    *   Processes the input using the saved scaler and predicts the fraud risk using the loaded model.
-    *   Displays the result ("High Risk" or "Low Risk") in a clear and visually appealing manner.
+| Feature | Type | Description |
+|---------|------|-------------|
+| `TransactionAmount` | Numerical | Amount of the transaction |
+| `CustomerAge` | Numerical | Age of the customer |
+| `AccountBalance` | Numerical | Account balance before transaction |
+| `Channel` | Categorical | Transaction channel (Online, ATM, Branch) |
+| `LoginAttempts` | Numerical | Number of login attempts before transaction |
+| `is_fraud` | Target | Binary label (0 = Legitimate, 1 = Fraudulent) |
+
+## Model & Methodology
+
+### Data Understanding & Loading
+
+The `Data` class loads the CSV dataset into a Pandas DataFrame and performs initial exploration including null value checks and descriptive statistics.
+
+### Data Preprocessing
+
+The `DataPreprocessing` class:
+- **Feature Selection:** Selects relevant features for model training
+- **Label Encoding:** Converts categorical `Channel` values to numerical: `{'Online': 0, 'Branch': 1, 'ATM': 2}`
+
+### Exploratory Data Analysis (EDA)
+
+Multiple EDA classes generate visualizations:
+- **Univariate Analysis:** Distribution plots of individual features (`TransactionAmount`, `CustomerAge`)
+- **Bivariate Analysis:** Relationship analysis between features and the fraud target variable
+
+### Model Development
+
+The `Model` class executes the ML pipeline:
+- **Data Splitting:** 80% training / 20% testing with stratified sampling
+- **Feature Scaling:** `StandardScaler` standardizes all features (mean=0, std=1)
+- **Algorithm:** Support Vector Classifier (SVC) with linear kernel
+- **Model Persistence:** `PickleData` class serializes trained model and scaler
+
+### Model Evaluation
+
+Performance metrics calculated on test set:
+- Confusion Matrix
+- Classification Report (Precision, Recall, F1-Score)
+- Accuracy Score
+
+## Architecture
+
+The project consists of two main components:
+
+**1. Model Training Pipeline (`model_training.ipynb`)**
+   - `Data`, `DataPreprocessing`, `Graph`, `UnivariateAnalysis`, `BivariateAnalysis` classes
+   - `Model` class manages the SVM training pipeline
+   - `PickleData` class serializes model and scaler
+
+**2. Flask API & Web Interface (`api.py` + `index.html`)**
+   - RESTful API endpoints for health checks and fraud prediction
+   - CORS-enabled for cross-origin requests
+   - HTML form interface for user input
+   - Real-time prediction with risk classification
 
 ## Data
 
@@ -81,54 +145,162 @@ The trained model's performance is assessed on the unseen test data using standa
 *   **Classification Report:** To review precision, recall, and F1-score for each class.
 *   **Accuracy Score:** To get the overall percentage of correct classifications.
 
+## Performance
+
+**Model Performance Summary:**
+
+```
+              precision    recall  f1-score   support
+           0       0.83      0.94      0.88       376
+           1       0.70      0.43      0.53       127
+    accuracy                           0.81       503
+```
+
+**Key Metrics:**
+*   **Overall Accuracy:** ~**81%** - The model correctly classifies 81% of transactions
+*   **Fraud Detection (Class 1):**
+    *   **Precision:** 70% - When the model predicts fraud, it's correct 70% of the time
+    *   **Recall:** 43% - The model identifies 43% of actual fraudulent transactions
+*   **Legitimate Detection (Class 0):**
+    *   **Precision:** 83% - High accuracy for legitimate transactions
+    *   **Recall:** 94% - Catches most legitimate transactions
+
+## Installation & Setup
+
+### Prerequisites
+- Python 3.7+
+- pip package manager
+
+### Step 1: Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+**Dependencies:**
+- `pandas` - Data manipulation
+- `scikit-learn` - ML algorithms and preprocessing
+- `matplotlib` - Data visualization
+- `flask` - Web API framework
+- `flask-cors` - Cross-Origin Resource Sharing support
+- `streamlit` (optional) - For alternative UI
+
+### Step 2: Prepare Model Files
+Ensure the following files exist in the project directory:
+- `svm_model.pkl` - Trained SVM model
+- `scaler.pkl` - Feature scaler for normalization
+
+If these files don't exist, run the model training notebook first to generate them.
+
+## Usage
+
+### Option 1: Run Flask API + Web Interface (Recommended)
+
+1. Start the Flask server:
+```bash
+python api.py
+```
+
+2. Open your browser and navigate to:
+```
+http://localhost:5000
+```
+
+3. Use the web form to input transaction details and get real-time predictions
+
+### Option 2: Use REST API Directly
+
+**Health Check:**
+```bash
+curl http://localhost:5000/health
+```
+
+**Make Prediction:**
+```bash
+curl -X POST http://localhost:5000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "TransactionAmount": 1500,
+    "CustomerAge": 35,
+    "AccountBalance": 50000,
+    "Channel": "Online",
+    "LoginAttempts": 2
+  }'
+```
+
+## API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/` | GET | Web interface |
+| `/api` | GET | API information and endpoints |
+| `/health` | GET | Health check |
+| `/predict` | POST | Fraud prediction |
+
+### Predict Endpoint Details
+
+**Request Format:**
+```json
+{
+  "TransactionAmount": <number>,
+  "CustomerAge": <number>,
+  "AccountBalance": <number>,
+  "Channel": "<Online|Branch|ATM>",
+  "LoginAttempts": <number>
+}
+```
+
+**Response Format (Fraud Detected):**
+```json
+{
+  "prediction": 1,
+  "is_fraud": true,
+  "message": "High Risk: Fraud Detected!"
+}
+```
+
+**Response Format (Legitimate):**
+```json
+{
+  "prediction": 0,
+  "is_fraud": false,
+  "message": "Low Risk: Transaction is Legitimate"
+}
+```
+
 ## Web Application Interface
 
-The project is deployed as an interactive web app using **Streamlit**, featuring two main sections:
+The interactive web interface (`index.html`) provides:
+- **Input Form:** Enter transaction details (amount, age, balance, channel, login attempts)
+- **Real-time Predictions:** Instant classification with visual feedback
+- **Risk Indicators:** Color-coded results (Red for high risk 🚨, Green for low risk ✅)
+- **Responsive Design:** Works on desktop and mobile browsers
 
-*   **Prediction Page:** An intuitive form where users can input transaction details. The app processes this input in real-time and displays the model's prediction with clear visual cues (red for "High Risk" 🚨 and green for "Low Risk" ✅).
-*   **About Page:** Provides detailed information about the project's purpose, the technologies used, and the developer.
+## Future Improvements
 
-## Results
+Planned enhancements to boost model performance and functionality:
 
-*Model Performance Summary:*
+*   **Improve Model Recall:** 
+    - Implement SMOTE (Synthetic Minority Over-sampling Technique)
+    - Use class weights to balance the imbalanced dataset
+    - Improve detection of fraudulent cases
 
-The SVM model's performance on the test set is as follows:
-          precision    recall  f1-score   support
+*   **Advanced Models:**
+    - Experiment with XGBoost or LightGBM for higher performance
+    - Test ensemble methods combining multiple algorithms
+    - Implement neural networks with deep learning
 
-       0       0.83      0.94      0.88       376
-       1       0.70      0.43      0.53       127
+*   **Feature Engineering:**
+    - Develop transaction frequency features
+    - Add time-of-day analysis
+    - Incorporate historical transaction patterns
 
-accuracy                           0.81       503
+*   **Production Deployment:**
+    - Deploy to cloud platforms (AWS, GCP, Azure)
+    - Add database integration for transaction logging
+    - Implement model versioning and A/B testing
+    - Add authentication and authorization
 
-*   **Overall Accuracy:** Approximately **81%**. The model correctly classifies the majority of transactions.
-*   **Fraud Class (1) Performance:**
-    *   **Precision (0.70):** 70% of transactions flagged as fraud are actually fraudulent.
-    *   **Recall (0.43):** The model identifies 43% of all actual fraudulent transactions.
-
-## How to Run
-
-Follow these steps to set up and run the project:
-
-1.  **Install Prerequisites:**
-    ```bash
-    pip install pandas scikit-learn matplotlib streamlit streamlit-option-menu
-    ```
-
-2.  **Run the Streamlit Application:**
-    *   Ensure `app.py`, `svm_model.pkl`, and `scaler.pkl` are in the same directory.
-    *   Open your terminal and navigate to the project folder.
-    *   Execute the following command:
-    ```bash
-    streamlit run app.py
-    ```
-    *   The application will open in your web browser.
-
-## Conclusion & Future Work
-
-This project successfully builds an end-to-end system for fraud detection, from model training to a functional web application. The SVM model provides a solid baseline for identifying fraudulent transactions.
-
-**Future Work:**
-*   **Improve Model Recall:** Implement techniques like SMOTE or use class weights to better handle the imbalanced nature of the dataset and improve the detection of fraudulent cases.
-*   **Advanced Models:** Experiment with tree-based models like XGBoost or LightGBM, which often yield higher performance on tabular data.
-*   **Feature Engineering:** Develop new features from existing data (e.g., transaction frequency, time-of-day analysis) to enhance predictive power.
-*   **Cloud Deployment:** Deploy the Streamlit app to a cloud service to make it publicly accessible.
+*   **Monitoring:**
+    - Track model performance in production
+    - Alert system for anomalies
+    - Model retraining pipeline
